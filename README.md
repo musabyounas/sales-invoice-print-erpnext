@@ -1,4 +1,4 @@
-sales-invoice-print-erpnext
+#sales-invoice-print-erpnext
 
 ## 📌 Description
 Developed a customized sales invoice print format with enhanced layout and better readability.
