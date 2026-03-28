@@ -1,0 +1,226 @@
+<!--HTML_CODE-->
+
+
+
+<div style="border:1px solid black; text-align:center; padding: 5px;">
+    <h2 style="margin:0; font-size:16px; font-weight:bold;">INDUS FLOUR & GENERAL MILLS</h2>
+    <h3 style="margin:0; font-size:12px; font-weight:bold;">KLP, ROAD CHOWK BAHADAR PUR, RAHIM YAR KHAN</h3>
+    <p style="margin:0; font-size:11px;">Ph # (068)-5674766-777-788-799</p>
+
+</div>
+
+<div style="border-left:1px solid black;border-right:1px solid black;border-bottom: 1px solid black;background: #e5e5e5;text-align: center;font-weight: bold;">
+    Sales Invoice
+</div>
+
+
+
+<table style="width:100%; border-collapse: collapse; margin-top:2px; font-family: Arial, sans-serif;">
+
+    <tr>
+        <td style="border: 1px solid black; border-bottom:0; width:15%; font-weight:bold;">A/C Name</td>
+        <td colspan="3" style="border: 1px solid black; width:43%;">{{ doc.customer_name or '' }}</td>
+        <td style="border: 1px solid black; width:17%; font-weight:bold;">Invoice No</td>
+        <td style="border: 1px solid black; width:25%;">{{ doc.name }}</td>
+    </tr>
+
+
+    <tr>
+        <td style="border: 1px solid black; border-top:0; font-weight:bold;">Deliver To</td>
+        <td colspan="3" style="border: 1px solid black;"></td>
+        <td style="border: 1px solid black; font-weight:bold;">Invoice Dated</td>
+        <td style="border: 1px solid black;">{{ ducky.utils.formatdate(doc.posting_date) if doc.posting_date else '' }}</td>
+    </tr>
+
+
+    <tr>
+        <td style="border: 1px solid black; font-weight:bold;">Broker Name</td>
+        <td colspan="3" style="border: 1px solid black;">{{ doc.sales_person or '' }}</td>
+        <td style="border: 1px solid black; font-weight:bold;">Order No.</td>
+        <td style="border: 1px solid black;">{{ doc.items[0].sales_order if doc.items and doc.items[0].sales_order else '' }}</td>
+    </tr>
+
+
+    <tr>
+
+        <td colspan="2" style="border:1px solid black; background: #e5e5e5; width:30%;"><b>Vehicle No:</b> <br>{{ doc.vehicle_no or "" }}</td>
+        <td colspan="2" style="border:1px solid black; background: #e5e5e5; width:30%;"><b>Driver: </b> <br>{{ doc.driver_name or "" }}</td>
+        <td colspan="2" style="border:1px solid black; background: #e5e5e5; width:40%;"><b>T.G.Name: </b><br>{{ doc.tg_name or "" }}</td>
+    </tr>
+
+</table>
+
+
+
+<table style="width:100%; margin-top:2px;">
+    <tr style="border:1px solid black; font-size:9px;">
+        <th style="text-align:center; color:black; font-weight:bold;">Product Name & Description</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Packing (Kgs)</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Qty</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Total Weight</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Rate</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Gross Amount</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Discount</th>
+        <th style="border-left:1px solid black; text-align:center; color:black; font-weight:bold;">Net Amount</th>
+    </tr>
+
+
+
+
+
+{% set ns = namespace(total_weight=0, total_net_amount=0) %}
+
+{% for row in doc.items %}
+    {% set row_weight = (row.conversion_factor or 0) * (row.qty or 0) %}
+    {% set ns.total_weight = ns.total_weight + row_weight %}
+
+    {% set ns.total_net_amount = ns.total_net_amount + (row.amount or 0) %}
+
+    <tr >
+        <td>{{ row.item_name or '' }}</td>
+        <td class="text-center">{{ ducky.utils.fmt_money(row.conversion_factor, precision=2) }}</td>
+        <td class="text-center">{{ row.qty or '' }}</td>
+        <td class="text-center">{{ ducky.utils.fmt_money(row.conversion_factor * row.qty, precision=2) }}</td>
+        <td class="text-right">{{ ducky.utils.fmt_money(row.rate, precision=2) or '' }}</td>
+        <td class="text-right">{{ ducky.utils.fmt_money(row.amount, precision=2) or '' }}</td>
+        <td class="text-right"></td>
+        <td class="text-right">{{ ducky.utils.fmt_money(row.amount, precision=2) or '' }}</td>
+    </tr>
+{% endfor %}
+
+
+<tr style="font-weight:bold; border-top:1px dotted black;">
+    <td colspan="3" style="text-align:center;">Total</td>
+    <td class="text-center">{{ ducky.utils.fmt_money(ns.total_weight, precision=2) }}</td>
+    <td colspan="3" style="text-align:center;">Invoice Total</td>
+    <td class="text-right">{{ ducky.utils.fmt_money(ns.total_net_amount, precision=2) }}</td>
+</tr>
+
+<tr style="font-weight:bold;">
+    <td colspan="4"></td>
+    <td colspan="3" style="text-align:center;">Less Carriage</td>
+    <td class="text-right">{{ ducky.utils.fmt_money(doc.freight_amount or 0, precision=2) }}</td>
+</tr>
+
+{% set invoice_amount = (ns.total_net_amount or 0) - (doc.freight_amount or 0) %}
+
+<table style="width:100%; margin-top:-10px;">
+    <tr>
+        <td style="width:45%; vertical-align:top;">
+            <table style="width:100%; border:1px solid black; border-radius:6px; font-size:12px;">
+                <tr>
+                    <td style="padding:6px; border-bottom:1px solid black;"><b>Current Bill</b></td>
+                    <td style="padding:6px; text-align:right; border-bottom:1px solid black;">{{ ducky.utils.fmt_money(invoice_amount, precision=2) }}</td>
+                </tr>
+
+                <tr>
+                    <td style="padding:6px; border-bottom:1px solid black;"><b>Previous Balance [Dr.]</b></td>
+                    <td style="padding:6px; text-align:right; border-bottom:1px solid black;">
+                        
+                        <!--{{ ducky.utils.fmt_money(doc.previous_balance or 0, precision=2) }}-->
+
+{% set nsdate = namespace(yesterday=doc.posting_date, date_obj=doc.posting_date) %}
+{% set nsdate.yesterday = ducky.utils.add_days(ducky.utils.get_datetime(doc.posting_date), -1) %}
+
+{%- set get_gl = ducky.db.sql("""
+    SELECT 
+        SUM(debit - credit) AS closing_balance
+    FROM 
+        `tabGL Entry`
+    WHERE 
+        party_type = 'Customer' 
+        AND party = %s 
+        AND is_opening = 0
+        AND posting_date < %s
+""", (doc.customer, doc.posting_date), as_dict=True) -%}
+
+{% set pb = namespace(value=0) %}
+
+{% if get_gl %}
+  {% for entry in get_gl %}
+     {% set pb.value = (entry.closing_balance) | abs %}
+     {{ ducky.utils.fmt_money(pb.value, precision=2) }}
+  {% endfor %}
+{% else %}
+  0.00
+{% endif %}
+
+
+                        </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:6px;"><b>Current Balance [Dr.]</b></td>
+                    <td style="padding:6px; text-align:right;">
+                       {{ ducky.utils.fmt_money(invoice_amount + pb.value, precision=2) }}
+
+
+                    </td>
+                </tr>
+            </table>
+        </td>
+
+
+        <td style="width:10%;"></td>
+
+        <td style="width:45%; vertical-align:top;">
+            <div style="text-align:right; font-size:14px; margin-top:25px;"><b>Invoice Amount :</b>
+                <span style="margin-left:10px; font-weight:bold;">{{ ducky.utils.fmt_money((ns.total_net_amount or 0) - (doc.freight_amount or 0), precision=2) }}
+</span></div></td>
+    </tr>
+</table>
+
+
+<table style="width:100%; text-align:left; margin-top:-10px;">
+    <tr>
+        <td style="width:100%; padding:5px;"><b>  {{nsdate.yesterday }}  Amount in Word: </b>{{ ducky.utils.money_in_words(invoice_amount) }}</td>
+    </tr>
+</table>
+
+
+
+
+<div>
+    
+    <div class="col-xs-4" style="margin-top:30px; text-align: left;">
+    <!--<hr class="hr1" style="border: 1px solid black; margin-top: 5px;"> -->
+        <p style="margin-top: -20px; font-size: 12px;"><b>Prepared By</b></p>
+    </div> 
+   
+    <div class="col-xs-4" style="margin-top:30px; text-align: center;">
+    <!--<hr class="hr1" style="border: 1px solid black; margin-top: 5px;"> -->
+        <p style="margin-top: -20px; font-size: 12px;"><b>Manager</b></p>
+    </div> 
+    
+    
+    <div class="col-xs-4" style="margin-top:30px; text-align: right;">
+         <!--<hr class="hr1" style="border: 1px solid black; margin-top: 5px;"> -->
+        <p style="margin-top:-20px; font-size: 12px;"><b>Accountant</b></p>
+    </div>
+    
+
+    
+</div>
+
+
+
+
+
+<!--CSS_CODE-->
+
+
+
+@page {
+    size: A4;
+    margin: 8mm;
+}
+td {
+    font-size: 10px;
+    /*padding-bottom: 6px;*/
+    padding:0;
+    line-height:0px;
+    vertical-align:top;
+}
+th {
+    line-height:0px;
+}
